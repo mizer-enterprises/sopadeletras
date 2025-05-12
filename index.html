@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sopa de Letras Educativa</title>
+<style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    .sidebar {
+      width: 280px;
+      background-color: #e6f4ea;
+      padding: 20px;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+      box-sizing: border-box;
+      text-align: center;
+    }
+    .sidebar img {
+      max-width: 100%;
+      height: auto;
+      margin-bottom: 20px;
+    }
+    .sidebar h2 {
+      font-size: 1.2em;
+      margin-top: 0;
+      color: #2d4a2e;
+    }
+    .sidebar p {
+      font-size: 0.95em;
+      line-height: 1.5;
+      margin-top: 10px;
+      text-align: justify;
+      color: #2d4a2e;
+    }
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #f4f7f2;
+    }
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(15, 30px);
+      grid-gap: 2px;
+    }
+    .cell {
+      width: 30px;
+      height: 30px;
+      border: 1px solid #a8d5ba;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      background-color: white;
+      font-size: 1em;
+      font-weight: bold;
+      color: #2d4a2e;
+    }
+    .cell.selected {
+      background-color: #cde7d3;
+    }
+    .cell.found {
+      background-color: #6ca965;
+      color: white;
+    }
+    .cell.surrendered {
+      background-color: #d35d5d !important;
+      color: white;
+    }
+    .side-box {
+      max-width: 250px;
+      background-color: #e1f0e3;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    ul {
+      padding-left: 20px;
+      text-align: left;
+    }
+    li.found {
+      text-decoration: line-through;
+      color: #3c5e3a;
+    }
+    #message-box {
+      margin-top: 20px;
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #3c5e3a;
+    }
+    .buttons {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 8px 14px;
+      font-size: 0.9em;
+      background-color: #6ca965;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #3c5e3a;
+    }
+
+    /* Estilos del Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+      padding-top: 60px;
+    }
+    .modal-content {
+      background-color: #f4f7f2;
+      margin: 5% auto;
+      padding: 20px;
+      border: 2px solid #6ca965;
+      width: 80%;
+      max-width: 500px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #3c5e3a;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .modal-body {
+      margin-top: 10px;
+      font-size: 1.05em;
+      color: #3c5e3a;
+      text-align: left;
+      line-height: 1.5;
+    }
+    .close {
+      color: #3c5e3a;
+      float: right;
+      font-size: 1.5em;
+      font-weight: bold;
+    }
+    .close:hover,
+    .close:focus {
+      color: #a2d39c;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    #modal-close-btn {
+      margin-top: 20px;
+      padding: 8px 14px;
+      background-color: #6ca965;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #modal-close-btn:hover {
+      background-color: #3c5e3a;
+    }
+  </style>
+
+</head>
+<body>
+  <div class="sidebar">
+    <img src="./logoSopaDeLetra.jpg" alt="Logo Sopa de Letras Educativa" />
+    <h2>Objetivo</h2>
+    <p>
+      El objetivo de esta actividad es que los visitantes aprendan de forma divertida sobre estos dos municipios,
+      reconociendo sus instituciones, espacios públicos y el valor de la organización municipal en la vida diaria.
+    </p>
+  </div>
+
+  <div class="main-content">
+    <div class="container">
+      <div id="grid"></div>
+      <div class="side-box" id="word-list">
+        <strong>Palabras a encontrar:</strong>
+        <ul id="word-items"></ul>
+        <div class="buttons">
+          <button id="restart-btn">Reiniciar Juego</button>
+          <button id="surrender-btn">Rendirse</button>
+        </div>
+      </div>
+    </div>
+    <div id="message-box"></div>
+    <audio id="success-sound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3" preload="auto"></audio>
+  </div>
+
+  <!-- Modal -->
+  <div id="word-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <div class="modal-header">
+        ¡Palabra Encontrada!
+      </div>
+      <div class="modal-body" id="modal-message"></div>
+      <button id="modal-close-btn" style="margin-top: 20px; padding: 8px 14px; background-color: #0984e3; color: white; border: none; border-radius: 4px;">Cerrar</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+
+  <script>
+    const words = [
+      { word: "TAMARINDO", msg: "Tamarindo: Educación. Cuenta con centros como el John F. Kennedy (29 aulas, capacidad para 980 estudiantes en Jornada Extendida)  y la Escuela Príamo Rodríguez Castillo (24 aulas, aula audiovisual). Además, figuran el Colegio ICM (privado, tanda vespertina). Salud. El CPNA Tamarindo (calle Central esquina J. P. Duarte 112) ofrece consultas, vacunación y atención preventiva. Se complementa con clínicas rurales en sectores cercanos como Brisas del Este y Los Frailes. Actividades recreativas. Las canchas deportivas de los centros educativos (como las del John F. Kennedy) son los principales espacios recreativos. La movilidad hacia otros sectores permite acceso a parques y centros deportivos externos." },
+      { word: "HAINAMOSA", msg: "Hainamosa: Educación. El sector destaca por el Instituto Politécnico Salesiano Hainamosa (Plaza Educativa Don Bosco), dirigido por la Sociedad Salesiana en convenio con el MINERD. Ofrece bachillerato técnico en Hotelería, Artes Culinarias, Informática, Electrónica en Comunicaciones, Electricidad Industrial, y Contabilidad y Finanzas. SaludEl Centro de Primer Nivel de Atención (CPNA) brinda servicios básicos como consultas generales y campañas preventivas. Adicionalmente, la Zona Franca Hainamosa incluye el Hospital El Almirante, con 40 camas para atención primaria y secundaria. Actividades recreativas El Instituto Salesiano organiza torneos deportivos, talleres artísticos y eventos culturales como parte de su metodología educativa. La comunidad también participa en programas como el National Hispanic Institute (LDZ18), promovido por centros como Hainamosa Excelencia." },
+      { word: "CIUDAD ALMIRANTE", msg: "Ciudad Almirante: Centros Recreativos• Complejo Deportivo y Cultural Ciudad El Almirante: Este espacio ha sido recientemente remozado por la Alcaldía de Santo Domingo Este, ofreciendo instalaciones para actividades deportivas y culturales. Parque Ciudad del Almirante: Ubicado en la Calle Miguel Díaz No. 6, este parque es un lugar propicio para el esparcimiento y actividades al aire libre.	Canchas Deportivas Renovadas: En colaboración con el Ministerio de Deportes y Recreación (MIDEREC) y el programa Cancha Entera, se han entregado canchas deportivas totalmente remozadas en la zona. Centros de Salud •	Hospital Municipal El Almirante: Ubicado en la Av. del Progreso, este hospital ofrece servicios médicos a la comunidad. Sub-Centro de Salud Ciudad del Almirante: Situado en la Calle Miguel Díaz No. 3, este centro brinda atención primaria en salud.	Red de Salud SDEC - SRS Metropolitano: Incluye varios centros de atención en Santo Domingo Este, como el Hospital Municipal El Almirante y otros consultorios médicos. Centros Educativos• Centro Educativo Nelly Biaggi Fe y Alegría: Ubicado en la Calle Antonio Torres No. 5, este centro ofrece educación primaria en jornada extendida. Colegios y Escuelas en El Almirante: Existen diversas instituciones educativas en la zona, como el Colegio Cristo de los Milagros, el Colegio Evangélico Miguel Limardo y el Centro Educativo Montesinos, entre otros. " },
+      { word: "LOS FRAILES", msg: "Los Frailes: Lugares de Recreación. Parque Los Frailes Centro Comunal. Los Frailes Playas cercanas.  Instituciones Educativas Escuela Básica Los Frailes. Liceo Secundario Los Frailes. Centro Educativo Privado Los Frailes. Centros de Salud. Clínica Los Frailes. Centro de Atención Primaria Los Frailes. Farmacias locales. Los Frailes II: Salud. Hospitales y centros médicos cercanos: • Hospital Municipal de El Almirante (hospital público donde atienden emergencias y consultas generales). • Clínica Los Frailes (servicio de consultas, laboratorio y atención de emergencias privadas). • Centro Médico Integral Los Frailes II (servicios médicos privados más especializados). Educación. Escuelas y colegios: • Centro Educativo Los Frailes II (escuela pública básica). • Colegio Bautista Cristiano (privado, desde nivel inicial hasta secundaria). • Liceo Manuel María Valencia (nivel secundario público). Educación. Escuelas y colegios:• Centro Educativo Los Frailes II (escuela pública básica). •Colegio Bautista Cristiano (privado, desde nivel inicial hasta secundaria). • Liceo Manuel María Valencia (nivel secundario público)." },
+      { word: "BRISAS DEL ESTE", msg: "Brisas del Este: Salud. Hospitales y centros médicos cercanos: • Hospital Municipal de El Almirante (también cercano a Brisas del Este). • Centro Médico Integral Brisas del Este (clínica privada con consultas especializadas). • Laboratorio Clínico Brisas (servicios de laboratorio). EducaciónEscuelas y colegios: • Centro Educativo Brisas del Este (escuela pública de nivel básico). • Colegio Mi Mundo Infantil (privado, nivel inicial). • Liceo Profesora Laura Beltrán (nivel secundario). Parques y áreas deportivas: • Parque Central de Brisas del Este: parque para toda la familia, con áreas de ejercicios y canchas deportivas. • Cancha Multiuso Brisas del Este: espacio usado para torneos deportivos comunitarios."},
+      { word: "JOSE DE MENDOZA", msg: "José de Mendoza:  Lugares de Recreación- Cancha Deportiva José de Mendoza  - Centro Comunal José de Mendoza  - Parque Infantil del Sector  - Áreas verdes y de esparcimiento familiar. Instituciones Educativas- Liceo Secundario José de Mendoza  - Escuela Básica Profesor Ramón Matos  - Colegio Cristiano Nueva Luz.  Centros de Salud- Clínica Comunitaria José de Mendoza.  - Consultorio Médico Popular.  - Farmacia Mendoza. " },
+      { word: "BRISA ORIENTAL", msg: "Brisa Oriental: Lugares de Recreación- Parque Brisa Oriental. - Plazoleta Cultural del Sector.  - Áreas para zumba, caminatas y juegos infantiles.  Instituciones Educativas- Escuela Básica Brisa Oriental.  - Centro Educativo Jesús es Luz.  - Colegio Mi Nuevo Amanecer. Centros de Salud.- Centro de Primer Nivel Brisa Oriental.- Clínica Dra. Peña. - Farmacia Brisa." },
+      { word: "LA UREÑA", msg: "La Ureña: La prevención es parte vital de la salud pública." },
+    ];
+
+    const gridSize = 15;
+    let seleccion = [];
+    let encontradas = [];
+    const posicionesPalabras = [];
+
+    const grid = document.getElementById("grid");
+    const wordList = document.getElementById("word-items");
+    const messageBox = document.getElementById("message-box");
+    const modal = document.getElementById("word-modal");
+    const modalMessage = document.getElementById("modal-message");
+    const closeModalBtn = document.getElementById("modal-close-btn");
+    const closeModalSpan = document.getElementsByClassName("close")[0];
+
+    function generarLetra() {
+      const letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      return letras[Math.floor(Math.random() * letras.length)];
+    }
+
+    function crearGrid() {
+      grid.innerHTML = '';
+      for (let i = 0; i < gridSize * gridSize; i++) {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.dataset.index = i;
+        cell.textContent = '';
+        cell.addEventListener("click", () => seleccionarCelda(cell));
+        grid.appendChild(cell);
+      }
+    }
+
+    function colocarPalabras() {
+      posicionesPalabras.length = 0;
+      words.forEach(palabraObj => {
+        const palabra = palabraObj.word.replace(/\s/g, '');
+        let colocada = false;
+        let intentos = 0;
+        while (!colocada && intentos < 1000) {
+          const direccion = Math.random() < 0.5 ? 'H' : 'V';
+          const fila = Math.floor(Math.random() * (direccion === 'H' ? gridSize : gridSize - palabra.length));
+          const col = Math.floor(Math.random() * (direccion === 'V' ? gridSize : gridSize - palabra.length));
+          colocada = insertarPalabra(palabra, fila, col, direccion, palabraObj);
+          intentos++;
+        }
+      });
+      for (let i = 0; i < gridSize * gridSize; i++) {
+        const cell = grid.children[i];
+        if (cell.textContent === '') {
+          cell.textContent = generarLetra();
+        }
+      }
+    }
+
+    function insertarPalabra(palabra, fila, col, direccion, palabraObj) {
+      const indices = [];
+      for (let i = 0; i < palabra.length; i++) {
+        const r = direccion === 'H' ? fila : fila + i;
+        const c = direccion === 'H' ? col + i : col;
+        if (r >= gridSize || c >= gridSize) return false;
+        const index = r * gridSize + c;
+        const cell = grid.children[index];
+        if (cell.textContent === '' || cell.textContent === palabra[i]) {
+          indices.push(index);
+        } else {
+          return false;
+        }
+      }
+      indices.forEach((index, i) => {
+        const cell = grid.children[index];
+        cell.textContent = palabra[i];
+        cell.dataset.letraCorrecta = palabra[i];
+      });
+      posicionesPalabras.push({ palabra: palabraObj.word, indices, msg: palabraObj.msg });
+      return true;
+    }
+
+    function seleccionarCelda(cell) {
+      const index = parseInt(cell.dataset.index);
+      if (cell.classList.contains("found")) return;
+      if (cell.classList.contains("selected")) {
+        cell.classList.remove("selected");
+        seleccion = seleccion.filter(i => i !== index);
+      } else {
+        cell.classList.add("selected");
+        seleccion.push(index);
+      }
+      verificarSeleccion();
+    }
+
+    // Función para ordenar letras (considerando repeticiones)
+    function letrasOrdenadas(texto) {
+      return texto.split('').sort().join('');
+    }
+
+    // Verificar sin importar orden: se valida si la selección, ordenada, 
+    // coincide con la palabra (sin espacios) también ordenada.
+    function verificarSeleccion() {
+      const textoSeleccionado = seleccion.map(i => grid.children[i].textContent).join("");
+      const textoReverso = [...textoSeleccionado].reverse().join("");
+      // Reemplazamos espacios en la palabra
+      for (let p of words) {
+        if (encontradas.includes(p.word)) continue;
+        const palabraLimpia = p.word.replace(/\s/g, '');
+        // Si la cantidad de letras no coincide, no es la palabra
+        if (textoSeleccionado.length !== palabraLimpia.length) continue;
+        // Comparamos ambas cadenas ordenadas
+        if (letrasOrdenadas(textoSeleccionado) === letrasOrdenadas(palabraLimpia)
+            || letrasOrdenadas(textoReverso) === letrasOrdenadas(palabraLimpia)) {
+          marcarEncontrada(p.word);
+          return;
+        }
+      }
+    }
+
+    function marcarEncontrada(nombre) {
+      const palabra = words.find(p => p.word === nombre);
+      if (palabra) {
+        seleccion.forEach(i => grid.children[i].classList.add("found"));
+        seleccion = [];
+        encontradas.push(palabra.word);
+        mostrarPalabrasEncontradas();
+        mostrarModal(palabra.msg);
+      }
+    }
+
+    function mostrarPalabrasEncontradas() {
+      wordList.innerHTML = '';
+      words.forEach(p => {
+        const li = document.createElement('li');
+        li.textContent = p.word.toUpperCase();
+        if (encontradas.includes(p.word)) {
+          li.classList.add("found");
+        }
+        wordList.appendChild(li);
+      });
+      if (encontradas.length === words.length) {
+        mensajeFinal();
+      }
+    }
+
+    function mostrarModal(msg) {
+      modalMessage.textContent = msg;
+      modal.style.display = "block";
+      setTimeout(() => {
+        confetti();
+      }, 500);
+    }
+
+    function confetti() {
+      const end = Date.now() + (15 * 1000);
+      (function frame() {
+        confetti({
+          particleCount: 3,
+          angle: Math.random() * 360,
+          spread: 45,
+          origin: { x: Math.random(), y: Math.random() - 0.2 }
+        });
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      })();
+    }
+
+    function mensajeFinal() {
+      messageBox.innerHTML = '¡Felicidades! Has encontrado todas las palabras.';
+    }
+
+    function reiniciarJuego() {
+      seleccion = [];
+      encontradas = [];
+      crearGrid();
+      colocarPalabras();
+      mostrarPalabrasEncontradas();
+      messageBox.innerHTML = '';
+    }
+
+    function rendirse() {
+      words.forEach(palabra => {
+        const indices = posicionesPalabras.find(x => x.palabra === palabra.word).indices;
+        indices.forEach(index => {
+          const cell = grid.children[index];
+          cell.classList.add("surrendered");
+        });
+      });
+      mostrarPalabrasEncontradas();
+    }
+
+    closeModalSpan.onclick = () => modal.style.display = "none";
+    closeModalBtn.onclick = () => modal.style.display = "none";
+
+    document.getElementById("restart-btn").addEventListener("click", reiniciarJuego);
+    document.getElementById("surrender-btn").addEventListener("click", rendirse);
+
+    crearGrid();
+    colocarPalabras();
+    mostrarPalabrasEncontradas();
+  </script>
+</body>
+</html>
